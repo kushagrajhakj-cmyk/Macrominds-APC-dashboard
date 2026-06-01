@@ -311,73 +311,311 @@ tab1,tab2,tab3 = st.tabs(
 
 with tab1:
 
-    st.subheader(
-        "Historical Plant Data"
-    )
+    st.subheader("Historical Plant Data")
 
     st.dataframe(df.head(50))
 
-    col1,col2 = st.columns(2)
+    st.markdown("---")
 
-    with col1:
+    st.subheader("Interactive Plot Builder")
 
-        fig = px.scatter(
+    plot_type = st.selectbox(
+
+        "Select Plot Type",
+
+        [
+            "Trend Plot",
+            "Scatter Plot",
+            "Histogram",
+            "3D Scatter Plot",
+            "Correlation Heatmap"
+        ]
+
+    )
+
+    columns = df.columns.tolist()
+
+    # ==========================================
+    # TREND PLOT
+    # ==========================================
+
+    if plot_type == "Trend Plot":
+
+        selected_column = st.selectbox(
+
+            "Select Parameter",
+
+            columns
+
+        )
+
+        fig = px.line(
 
             df,
 
-            x="Hydrogen_Flow",
+            y=selected_column,
 
-            y="MFI",
+            title=f"{selected_column} Trend"
 
-            title="Hydrogen Flow vs MFI"
+        )
+
+        fig.update_layout(
+
+            xaxis_title="Sample Number",
+
+            yaxis_title=selected_column
 
         )
 
         st.plotly_chart(
+
             fig,
+
             use_container_width=True
+
         )
 
-    with col2:
+    # ==========================================
+    # SCATTER PLOT
+    # ==========================================
 
-        fig = px.scatter(
+    elif plot_type == "Scatter Plot":
+
+        col1,col2 = st.columns(2)
+
+        with col1:
+
+            x_var = st.selectbox(
+
+                "X Axis",
+
+                columns,
+
+                key="scatter_x"
+
+            )
+
+        with col2:
+
+            y_var = st.selectbox(
+
+                "Y Axis",
+
+                columns,
+
+                index=1,
+
+                key="scatter_y"
+
+            )
+
+        add_trendline = st.checkbox(
+
+            "Add Trendline",
+
+            value=True
+
+        )
+
+        if add_trendline:
+
+            fig = px.scatter(
+
+                df,
+
+                x=x_var,
+
+                y=y_var,
+
+                trendline="ols",
+
+                title=f"{x_var} vs {y_var}"
+
+            )
+
+        else:
+
+            fig = px.scatter(
+
+                df,
+
+                x=x_var,
+
+                y=y_var,
+
+                title=f"{x_var} vs {y_var}"
+
+            )
+
+        st.plotly_chart(
+
+            fig,
+
+            use_container_width=True
+
+        )
+
+    # ==========================================
+    # HISTOGRAM
+    # ==========================================
+
+    elif plot_type == "Histogram":
+
+        selected_column = st.selectbox(
+
+            "Select Parameter",
+
+            columns,
+
+            key="hist"
+
+        )
+
+        fig = px.histogram(
 
             df,
 
-            x="Catalyst_Loading",
+            x=selected_column,
 
-            y="Yield",
+            nbins=30,
 
-            title="Catalyst Loading vs Yield"
+            title=f"{selected_column} Distribution"
 
         )
 
         st.plotly_chart(
+
             fig,
+
             use_container_width=True
+
         )
 
-    fig3d = px.scatter_3d(
+    # ==========================================
+    # 3D SCATTER
+    # ==========================================
 
-        df,
+    elif plot_type == "3D Scatter Plot":
 
-        x="Reactor_Temperature",
+        numeric_cols = df.select_dtypes(
 
-        y="Hydrogen_Flow",
+            include=np.number
 
-        z="Catalyst_Loading",
+        ).columns.tolist()
 
-        color="MFI",
+        col1,col2,col3,col4 = st.columns(4)
 
-        title="Operating Window"
+        with col1:
 
-    )
+            x_axis = st.selectbox(
 
-    st.plotly_chart(
-        fig3d,
-        use_container_width=True
-    )
+                "X Axis",
 
+                numeric_cols,
+
+                key="x3d"
+
+            )
+
+        with col2:
+
+            y_axis = st.selectbox(
+
+                "Y Axis",
+
+                numeric_cols,
+
+                index=min(1,len(numeric_cols)-1),
+
+                key="y3d"
+
+            )
+
+        with col3:
+
+            z_axis = st.selectbox(
+
+                "Z Axis",
+
+                numeric_cols,
+
+                index=min(2,len(numeric_cols)-1),
+
+                key="z3d"
+
+            )
+
+        with col4:
+
+            color_axis = st.selectbox(
+
+                "Color By",
+
+                numeric_cols,
+
+                index=min(3,len(numeric_cols)-1),
+
+                key="color3d"
+
+            )
+
+        fig = px.scatter_3d(
+
+            df,
+
+            x=x_axis,
+
+            y=y_axis,
+
+            z=z_axis,
+
+            color=color_axis,
+
+            title="Interactive Operating Window"
+
+        )
+
+        st.plotly_chart(
+
+            fig,
+
+            use_container_width=True
+
+        )
+
+    # ==========================================
+    # CORRELATION HEATMAP
+    # ==========================================
+
+    elif plot_type == "Correlation Heatmap":
+
+        numeric_df = df.select_dtypes(
+
+            include=np.number
+
+        )
+
+        corr = numeric_df.corr()
+
+        fig = px.imshow(
+
+            corr,
+
+            text_auto=True,
+
+            aspect="auto",
+
+            title="Correlation Matrix"
+
+        )
+
+        st.plotly_chart(
+
+            fig,
+
+            use_container_width=True
+
+        )
 # =====================================================
 # OPTIMIZER
 # =====================================================
