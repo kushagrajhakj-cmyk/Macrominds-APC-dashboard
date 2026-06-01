@@ -335,15 +335,17 @@ target_yield = st.sidebar.number_input(
 
 )
 
-st.sidebar.markdown("---")
-
-st.sidebar.header(
-    "Developed by Kushagra"
-)
 
 
 run_button = st.sidebar.button(
     "Optimize Process"
+)
+
+
+st.sidebar.markdown("---")
+
+st.sidebar.header(
+    "Developed by Kushagra"
 )
 
 # =====================================================
@@ -368,77 +370,161 @@ tab1,tab2,tab3,tab4 = st.tabs(
 # HISTORICAL DATA
 # =====================================================
 
-
 with tab1:
 
-    st.subheader("Process Flow Diagram")
+    st.subheader("Live Process Flow Diagram")
 
-    feed_temp_live = live_data["Feed_Temperature"].iloc[0]
-    feed_rate_live = live_data["Feed_Rate"].iloc[0]
+    current = df.iloc[-1]
 
-    reactor_temp_live = live_data["Reactor_Temperature"].iloc[0]
-    reactor_pressure_live = live_data["Reactor_Pressure"].iloc[0]
+    feed_temp = current["Feed_Temperature"]
+    feed_rate = current["Feed_Rate"]
 
-    hydrogen_live = live_data["Hydrogen_Flow"].iloc[0]
+    reactor_temp = current["Reactor_Temperature"]
+    reactor_pressure = current["Reactor_Pressure"]
 
-    mfi_live = live_data["MFI"].iloc[0]
-    yield_live = live_data["Yield"].iloc[0]
+    hydrogen_flow = current["Hydrogen_Flow"]
+    catalyst_loading = current["Catalyst_Loading"]
+
+    mfi = current["MFI"]
+    yield_value = current["Yield"]
+
+    prediction = iso_model.predict(
+        current[feature_names].values.reshape(1,-1)
+    )[0]
 
     if prediction == -1:
 
-        st.error(
-            "⚠ Process Anomaly Detected"
-        )
+        st.error("🔴 Process Anomaly Detected")
 
     else:
 
-        st.success(
-            "✅ Normal Operation"
-        )
-
-    st.info(
-        f"""
-        FEED STREAM
-
-        Temperature: {feed_temp_live:.2f} °C
-
-        Feed Rate: {feed_rate_live:.2f} kg/h
-        """
-    )
+        st.success("🟢 Normal Operation")
 
     st.markdown(
         f"""
         <div style="
-        border:3px solid #1f77b4;
-        border-radius:15px;
-        padding:20px;
-        margin:20px;
-        text-align:center;
+        width:100%;
+        height:450px;
+        position:relative;
+        border:1px solid #ddd;
+        border-radius:10px;
         ">
 
-        <h2>REACTOR R-101</h2>
+        <!-- FEED LINE -->
 
-        <b>Temperature:</b> {reactor_temp_live:.2f} °C<br>
-        <b>Pressure:</b> {reactor_pressure_live:.2f} bar<br>
-        <b>Hydrogen Flow:</b> {hydrogen_live:.2f}<br>
-        <b>Health:</b> {health:.1f}%<br>
+        <div style="
+        position:absolute;
+        left:20px;
+        top:120px;
+        width:180px;
+        border-top:4px solid black;
+        ">
+        </div>
+
+        <div style="
+        position:absolute;
+        left:20px;
+        top:80px;
+        ">
+        <b>FEED</b><br>
+        T = {feed_temp:.1f} °C<br>
+        F = {feed_rate:.1f}
+        </div>
+
+        <!-- H2 LINE -->
+
+        <div style="
+        position:absolute;
+        left:220px;
+        top:40px;
+        width:4px;
+        height:80px;
+        background:black;
+        ">
+        </div>
+
+        <div style="
+        position:absolute;
+        left:150px;
+        top:5px;
+        ">
+        <b>HYDROGEN</b><br>
+        {hydrogen_flow:.1f}
+        </div>
+
+        <!-- CATALYST LINE -->
+
+        <div style="
+        position:absolute;
+        left:220px;
+        top:250px;
+        width:4px;
+        height:80px;
+        background:black;
+        ">
+        </div>
+
+        <div style="
+        position:absolute;
+        left:130px;
+        top:330px;
+        ">
+        <b>CATALYST</b><br>
+        {catalyst_loading:.2f}
+        </div>
+
+        <!-- REACTOR -->
+
+        <div style="
+        position:absolute;
+        left:200px;
+        top:80px;
+        width:120px;
+        height:160px;
+        border:4px solid #1f77b4;
+        border-radius:40px;
+        text-align:center;
+        padding-top:20px;
+        font-size:14px;
+        ">
+
+        <b>REACTOR</b>
+
+        <br><br>
+
+        T = {reactor_temp:.1f} °C
+
+        <br>
+
+        P = {reactor_pressure:.1f} bar
 
         </div>
 
+        <!-- PRODUCT LINE -->
+
+        <div style="
+        position:absolute;
+        left:320px;
+        top:120px;
+        width:180px;
+        border-top:4px solid black;
+        ">
+        </div>
+
+        <div style="
+        position:absolute;
+        left:520px;
+        top:80px;
+        ">
+        <b>PRODUCT</b><br>
+        MFI = {mfi:.2f}<br>
+        Yield = {yield_value:.2f}
+        </div>
+
+        </div>
         """,
         unsafe_allow_html=True
     )
-
-    st.success(
-        f"""
-        PRODUCT STREAM
-
-        MFI: {mfi_live:.2f}
-
-        Yield: {yield_live:.2f} %
-        """
-    )
-
 
 with tab2:
 
@@ -906,39 +992,7 @@ with tab3:
 # MODEL INSIGHTS
 # =====================================================
 
-st.subheader(
-    "Anomaly Detection"
-)
 
-means = df[feature_names].mean()
-
-stds = df[feature_names].std()
-
-z_scores = abs(
-    (
-        live_data[feature_names].iloc[0]
-        -
-        means
-    )
-    /
-    stds
-)
-
-root_causes = (
-    z_scores
-    .sort_values(
-        ascending=False
-    )
-)
-
-st.metric(
-    "Plant Health",
-    f"{health:.1f}%"
-)
-
-st.dataframe(
-    root_causes.reset_index()
-)
 
 with tab4:
 
