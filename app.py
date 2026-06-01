@@ -8,6 +8,7 @@ import torch.nn as nn
 
 from scipy.optimize import differential_evolution
 import plotly.express as px
+from sklearn.ensemble import IsolationForest
 
 # =====================================================
 # PAGE CONFIG
@@ -86,6 +87,35 @@ def load_data():
 
 df = load_data()
 
+# =====================================================
+# ANOMALY MODEL
+# =====================================================
+
+@st.cache_resource
+def train_anomaly_model(df):
+
+    features = [
+
+        "Reactor_Pressure",
+        "Feed_Temperature",
+        "Feed_Rate",
+        "Reactor_Temperature",
+        "Hydrogen_Flow",
+        "Catalyst_Loading"
+
+    ]
+
+    model = IsolationForest(
+        contamination=0.03,
+        random_state=42
+    )
+
+    model.fit(df[features])
+
+    return model
+
+iso_model = train_anomaly_model(df)
+
 feature_names = [
 
     "Reactor_Pressure",
@@ -96,6 +126,28 @@ feature_names = [
     "Catalyst_Loading"
 
 ]
+
+# =====================================================
+# LIVE DATA FOR DEMO
+# =====================================================
+
+live_data = df.sample(1)
+
+score = iso_model.decision_function(
+    live_data[feature_names]
+)[0]
+
+prediction = iso_model.predict(
+    live_data[feature_names]
+)[0]
+
+health = max(
+    0,
+    min(
+        100,
+        (score + 0.5) * 100
+    )
+)
 
 # =====================================================
 # ENSEMBLE PREDICTION
@@ -222,11 +274,11 @@ def optimize_process(
 # =====================================================
 
 st.title(
-    "⚙️ Advanced Process Control Dashboard"
+    "MacroMinds Advanced Process Control Dashboard"
 )
 
 st.markdown(
-    "ANN + XGBoost Ensemble"
+    "ML Models Ensemble"
 )
 
 # =====================================================
@@ -283,6 +335,13 @@ target_yield = st.sidebar.number_input(
 
 )
 
+st.sidebar.markdown("---")
+
+st.sidebar.header(
+    "Developed by Kushagra"
+)
+
+
 run_button = st.sidebar.button(
     "Optimize Process"
 )
@@ -290,26 +349,98 @@ run_button = st.sidebar.button(
 # =====================================================
 # TABS
 # =====================================================
-
-tab1,tab2,tab3 = st.tabs(
+tab1,tab2,tab3,tab4 = st.tabs(
 
     [
+
+        "PFD Overview",
 
         "Historical Data",
 
         "Optimizer",
 
-        "Model Insights"
+        "Anomaly Detection"
 
     ]
 
 )
-
 # =====================================================
 # HISTORICAL DATA
 # =====================================================
 
+
 with tab1:
+
+    st.subheader("Process Flow Diagram")
+
+    feed_temp_live = live_data["Feed_Temperature"].iloc[0]
+    feed_rate_live = live_data["Feed_Rate"].iloc[0]
+
+    reactor_temp_live = live_data["Reactor_Temperature"].iloc[0]
+    reactor_pressure_live = live_data["Reactor_Pressure"].iloc[0]
+
+    hydrogen_live = live_data["Hydrogen_Flow"].iloc[0]
+
+    mfi_live = live_data["MFI"].iloc[0]
+    yield_live = live_data["Yield"].iloc[0]
+
+    if prediction == -1:
+
+        st.error(
+            "⚠ Process Anomaly Detected"
+        )
+
+    else:
+
+        st.success(
+            "✅ Normal Operation"
+        )
+
+    st.info(
+        f"""
+        FEED STREAM
+
+        Temperature: {feed_temp_live:.2f} °C
+
+        Feed Rate: {feed_rate_live:.2f} kg/h
+        """
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+        border:3px solid #1f77b4;
+        border-radius:15px;
+        padding:20px;
+        margin:20px;
+        text-align:center;
+        ">
+
+        <h2>REACTOR R-101</h2>
+
+        <b>Temperature:</b> {reactor_temp_live:.2f} °C<br>
+        <b>Pressure:</b> {reactor_pressure_live:.2f} bar<br>
+        <b>Hydrogen Flow:</b> {hydrogen_live:.2f}<br>
+        <b>Health:</b> {health:.1f}%<br>
+
+        </div>
+
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.success(
+        f"""
+        PRODUCT STREAM
+
+        MFI: {mfi_live:.2f}
+
+        Yield: {yield_live:.2f} %
+        """
+    )
+
+
+with tab2:
 
     st.subheader("Historical Plant Data")
 
@@ -620,7 +751,7 @@ with tab1:
 # OPTIMIZER
 # =====================================================
 
-with tab2:
+with tab3:
 
     st.subheader(
         "APC Optimizer"
@@ -775,7 +906,41 @@ with tab2:
 # MODEL INSIGHTS
 # =====================================================
 
-with tab3:
+st.subheader(
+    "Anomaly Detection"
+)
+
+means = df[feature_names].mean()
+
+stds = df[feature_names].std()
+
+z_scores = abs(
+    (
+        live_data[feature_names].iloc[0]
+        -
+        means
+    )
+    /
+    stds
+)
+
+root_causes = (
+    z_scores
+    .sort_values(
+        ascending=False
+    )
+)
+
+st.metric(
+    "Plant Health",
+    f"{health:.1f}%"
+)
+
+st.dataframe(
+    root_causes.reset_index()
+)
+
+with tab4:
 
     st.subheader(
         "Model Agreement"
