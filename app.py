@@ -519,8 +519,8 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:360px;
-        top:40px;
+        left:320px;
+        top:60px;
         width:4px;
         height:60px;
         background:#4FC3F7;
