@@ -377,7 +377,7 @@ with tab1:
     color:blue;
     ">
     <b>FEED</b><br>
-    T = {feed_temp:.1f} °C<br>
+    T = {st.session_state.feed_temp:.1f} °C<br>
     Flow rate = {feed_rate:.1f} m3/h<br>
     </div>
 
