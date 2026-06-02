@@ -15,8 +15,8 @@ from sklearn.ensemble import IsolationForest
 # =====================================================
 
 st.set_page_config(
-    page_title="Advanced Process Control",
-    page_icon="⚙️",
+    page_title="🏭 Advanced Process Control",
+    page_icon="🏭",
     layout="wide"
 )
 
@@ -361,7 +361,7 @@ tab1,tab2,tab3,tab4 = st.tabs(
 
         "Optimizer",
 
-        "Anomaly Detection"
+        "Model diagnostics"
 
     ]
 
@@ -376,29 +376,110 @@ with tab1:
 
     current = df.iloc[-1]
 
-    feed_temp = current["Feed_Temperature"]
-    feed_rate = current["Feed_Rate"]
+    st.markdown("### Process Inputs")
 
-    reactor_temp = current["Reactor_Temperature"]
-    reactor_pressure = current["Reactor_Pressure"]
+    c1,c2,c3 = st.columns(3)
 
-    hydrogen_flow = current["Hydrogen_Flow"]
-    catalyst_loading = current["Catalyst_Loading"]
+    with c1:
 
-    mfi = current["MFI"]
-    yield_value = current["Yield"]
+        feed_temp = st.number_input(
+            "Feed Temperature (°C)",
+            value=float(current["Feed_Temperature"])
+        )
+
+        feed_rate = st.number_input(
+            "Feed Rate",
+            value=float(current["Feed_Rate"])
+        )
+
+    with c2:
+
+        reactor_temp = st.number_input(
+            "Reactor Temperature (°C)",
+            value=float(current["Reactor_Temperature"])
+        )
+
+        reactor_pressure = st.number_input(
+            "Reactor Pressure (bar)",
+            value=float(current["Reactor_Pressure"])
+        )
+
+    with c3:
+
+        hydrogen_flow = st.number_input(
+            "Hydrogen Flow",
+            value=float(current["Hydrogen_Flow"])
+        )
+
+        catalyst_loading = st.number_input(
+            "Catalyst Loading",
+            value=float(current["Catalyst_Loading"])
+        )
+
+
+
+    predict_button = st.button(
+    "Predict Product Quality"
+)
+    
+if "mfi_pred" not in st.session_state:
+
+    st.session_state.mfi_pred = current["MFI"]
+    st.session_state.yield_pred = current["Yield"]
+
+if predict_button:
+
+    input_vector = [
+
+        reactor_pressure,
+        feed_temp,
+        feed_rate,
+        reactor_temp,
+        hydrogen_flow,
+        catalyst_loading
+
+    ]
+
+    pred,std,preds = ensemble_predict(
+        input_vector
+    )
+
+    confidence = np.exp(
+        -np.mean(std)
+    ) * 100
+
+    st.session_state.mfi_pred = pred[0]
+    st.session_state.yield_pred = pred[1]
+
+    st.success(
+        f"Prediction Completed | Confidence = {confidence:.1f}%"
+    )
+
+    mfi = st.session_state.mfi_pred
+    yield_value = st.session_state.yield_pred
+
+        
+
+    anomaly_input = np.array([[
+    reactor_pressure,
+    feed_temp,
+    feed_rate,
+    reactor_temp,
+    hydrogen_flow,
+    catalyst_loading
+    ]])
 
     prediction = iso_model.predict(
-        current[feature_names].values.reshape(1,-1)
+        anomaly_input
     )[0]
 
     if prediction == -1:
 
-        st.error("🔴 Process Anomaly Detected")
+            st.error("🔴 Process Anomaly Detected")
 
     else:
 
-        st.success("🟢 Normal Operation")
+            st.success("🟢 Normal Operation")
 
     st.markdown(
         f"""
@@ -406,7 +487,7 @@ with tab1:
         width:100%;
         height:450px;
         position:relative;
-        border:1px solid #ddd;
+        border:1px solid #444;
         border-radius:10px;
         ">
 
@@ -414,76 +495,63 @@ with tab1:
 
         <div style="
         position:absolute;
-        left:20px;
-        top:120px;
-        width:180px;
-        border-top:4px solid black;
+        left:80px;
+        top:190px;
+        width:220px;
+        border-top:4px solid #4FC3F7;
         ">
         </div>
+
+        <!-- FEED VALUES -->
 
         <div style="
         position:absolute;
         left:20px;
-        top:80px;
+        top:145px;
+        color:white;
         ">
         <b>FEED</b><br>
-        T = {feed_temp:.1f} °C<br>
-        F = {feed_rate:.1f}
+        Temp = {feed_temp:.1f} °C<br>
+        Rate = {feed_rate:.1f}
         </div>
 
-        <!-- H2 LINE -->
+        <!-- HYDROGEN LINE -->
 
         <div style="
         position:absolute;
-        left:220px;
+        left:360px;
         top:40px;
         width:4px;
-        height:80px;
-        background:black;
+        height:60px;
+        background:#4FC3F7;
         ">
         </div>
 
+        <!-- HYDROGEN VALUES -->
+
         <div style="
         position:absolute;
-        left:150px;
-        top:5px;
+        left:300px;
+        top:0px;
+        color:white;
+        text-align:center;
         ">
         <b>HYDROGEN</b><br>
-        {hydrogen_flow:.1f}
-        </div>
-
-        <!-- CATALYST LINE -->
-
-        <div style="
-        position:absolute;
-        left:220px;
-        top:250px;
-        width:4px;
-        height:80px;
-        background:black;
-        ">
-        </div>
-
-        <div style="
-        position:absolute;
-        left:130px;
-        top:330px;
-        ">
-        <b>CATALYST</b><br>
-        {catalyst_loading:.2f}
+        Flow = {hydrogen_flow:.1f}
         </div>
 
         <!-- REACTOR -->
 
         <div style="
         position:absolute;
-        left:200px;
-        top:80px;
+        left:300px;
+        top:100px;
         width:120px;
-        height:160px;
-        border:4px solid #1f77b4;
+        height:180px;
+        border:4px solid #4FC3F7;
         border-radius:40px;
         text-align:center;
+        color:white;
         padding-top:20px;
         font-size:14px;
         ">
@@ -500,21 +568,49 @@ with tab1:
 
         </div>
 
+        <!-- CATALYST LINE -->
+
+        <div style="
+        position:absolute;
+        left:360px;
+        top:280px;
+        width:4px;
+        height:60px;
+        background:#4FC3F7;
+        ">
+        </div>
+
+        <!-- CATALYST VALUES -->
+
+        <div style="
+        position:absolute;
+        left:290px;
+        top:350px;
+        color:white;
+        text-align:center;
+        ">
+        <b>CATALYST</b><br>
+        Load = {catalyst_loading:.2f}
+        </div>
+
         <!-- PRODUCT LINE -->
 
         <div style="
         position:absolute;
-        left:320px;
-        top:120px;
-        width:180px;
-        border-top:4px solid black;
+        left:420px;
+        top:190px;
+        width:220px;
+        border-top:4px solid #4FC3F7;
         ">
         </div>
 
+        <!-- PRODUCT VALUES -->
+
         <div style="
         position:absolute;
-        left:520px;
-        top:80px;
+        left:650px;
+        top:145px;
+        color:white;
         ">
         <b>PRODUCT</b><br>
         MFI = {mfi:.2f}<br>
@@ -525,7 +621,6 @@ with tab1:
         """,
         unsafe_allow_html=True
     )
-
 with tab2:
 
     st.subheader("Historical Plant Data")
