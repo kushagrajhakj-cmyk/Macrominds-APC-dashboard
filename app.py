@@ -476,8 +476,8 @@ with tab1:
     color:blue;
     ">
     <b>PRODUCT</b><br>
-    MFI = {st.session_state.mfi:.2f}<br>
-    Yield = {st.session_state.yield_value:.2f}
+    MFI = {st.session_state.mfi_pred:.2f}<br>
+    Yield = {st.session_state.yield_pred:.2f}
     </div>
 
     </div>
