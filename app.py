@@ -511,7 +511,7 @@ if predict_button:
         color:white;
         ">
         <b>FEED</b><br>
-        Temp = {feed_temp:.1f} °C<br>
+        T = {feed_temp:.1f} °C<br>
         Flow rate = {feed_rate:.1f} m3/h<br>
         </div>
 
@@ -531,13 +531,13 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:270px;
+        left:240px;
         top:20px;
         color:white;
         text-align:center;
         ">
         <b>HYDROGEN</b><br>
-        Flow = {hydrogen_flow:.1f}
+        Flow rate = {hydrogen_flow:.1f} m3/h<br>
         </div>
 
         <!-- REACTOR -->
@@ -560,10 +560,7 @@ if predict_button:
 
         <br><br>
 
-        T = {reactor_temp:.1f} °C
-
-        <br>
-
+        T = {reactor_temp:.1f} °C<br>
         P = {reactor_pressure:.1f} bar
 
         </div>
@@ -584,7 +581,7 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:290px;
+        left:240px;
         top:350px;
         color:white;
         text-align:center;
@@ -597,8 +594,8 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:420px;
-        top:190px;
+        left:350px;
+        top:200px;
         width:220px;
         border-top:4px solid #4FC3F7;
         ">
