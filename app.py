@@ -320,31 +320,20 @@ with tab1:
 
     current = df.iloc[-1]
 
-    st.subheader("Live Process Flow Diagram")
+    defaults = {
+        "feed_temp": float(current["Feed_Temperature"]),
+        "feed_rate": float(current["Feed_Rate"]),
+        "reactor_temp": float(current["Reactor_Temperature"]),
+        "reactor_pressure": float(current["Reactor_Pressure"]),
+        "hydrogen_flow": float(current["Hydrogen_Flow"]),
+        "catalyst_loading": float(current["Catalyst_Loading"]),
+        "mfi_pred": float(current["MFI"]),
+        "yield_pred": float(current["Yield"])
+    }
 
-    if "feed_temp" not in st.session_state:
-        st.session_state.feed_temp = float(current["Feed_Temperature"])
-
-    if "feed_rate" not in st.session_state:
-        st.session_state.feed_rate = float(current["Feed_Rate"])
-
-    if "reactor_temp" not in st.session_state:
-        st.session_state.reactor_temp = float(current["Reactor_Temperature"])
-
-    if "reactor_pressure" not in st.session_state:
-        st.session_state.reactor_pressure = float(current["Reactor_Pressure"])
-
-    if "hydrogen_flow" not in st.session_state:
-        st.session_state.hydrogen_flow = float(current["Hydrogen_Flow"])
-
-    if "catalyst_loading" not in st.session_state:
-        st.session_state.catalyst_loading = float(current["Catalyst_Loading"])
-
-    if "mfi_pred" not in st.session_state:
-        st.session_state.mfi_pred = float(current["MFI"])
-
-    if "yield_pred" not in st.session_state:
-        st.session_state.yield_pred = float(current["Yield"])
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
 
     st.markdown(
@@ -488,83 +477,80 @@ with tab1:
 
     st.markdown("### Process Inputs")
 
-    c1,c2,c3 = st.columns(3)
+    c1, c2, c3 = st.columns(3)
 
     with c1:
 
-        feed_temp = st.number_input(
-            "Feed Temperature (°C)",
-            value=float(current["Feed_Temperature"])
-        )
+        st.number_input(
+         "Feed Temperature (°C)",
+          key="feed_temp"
+         )
 
-        feed_rate = st.number_input(
-            "Feed Rate",
-            value=float(current["Feed_Rate"])
+        st.number_input(
+         "Feed Rate",
+         key="feed_rate"
         )
 
     with c2:
 
-        reactor_temp = st.number_input(
+        st.number_input(
             "Reactor Temperature (°C)",
-            value=float(current["Reactor_Temperature"])
+            key="reactor_temp"
         )
 
-        reactor_pressure = st.number_input(
+        st.number_input(
             "Reactor Pressure (bar)",
-            value=float(current["Reactor_Pressure"])
+            key="reactor_pressure"
         )
 
     with c3:
 
-        hydrogen_flow = st.number_input(
+        st.number_input(
             "Hydrogen Flow",
-            value=float(current["Hydrogen_Flow"])
+            key="hydrogen_flow"
         )
 
-        catalyst_loading = st.number_input(
+        st.number_input(
             "Catalyst Loading",
-            value=float(current["Catalyst_Loading"])
+            key="catalyst_loading"
         )
 
 
 
-    predict_button = st.button(
-    "Predict Product Quality"
+predict_button = st.button(
+    "Predict Product Quality",
+    use_container_width=True
 )
-    
-if "mfi_pred" not in st.session_state:
-
-    st.session_state.mfi_pred = current["MFI"]
-    st.session_state.yield_pred = current["Yield"]
 
 if predict_button:
 
     input_vector = [
 
-        reactor_pressure,
-        feed_temp,
-        feed_rate,
-        reactor_temp,
-        hydrogen_flow,
-        catalyst_loading
+        st.session_state.reactor_pressure,
+        st.session_state.feed_temp,
+        st.session_state.feed_rate,
+        st.session_state.reactor_temp,
+        st.session_state.hydrogen_flow,
+        st.session_state.catalyst_loading
 
     ]
 
-    pred,std,preds = ensemble_predict(
+    pred, std, preds = ensemble_predict(
         input_vector
     )
+
+    st.session_state.mfi_pred = float(pred[0])
+    st.session_state.yield_pred = float(pred[1])
 
     confidence = np.exp(
         -np.mean(std)
     ) * 100
 
-    st.session_state.mfi_pred = pred[0]
-    st.session_state.yield_pred = pred[1]
-
     st.success(
         f"Prediction Completed | Confidence = {confidence:.1f}%"
     )
 
+    st.rerun()
     mfi = st.session_state.mfi_pred
     yield_value = st.session_state.yield_pred
 
