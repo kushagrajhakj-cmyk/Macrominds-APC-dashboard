@@ -517,42 +517,41 @@ with tab1:
 
 
 
-predict_button = st.button(
-    "Predict Product Quality",
-    use_container_width=True
-)
+    predict_button = st.button(
+        "Predict Product Quality",
+         use_container_width=True
+        )
 
-if predict_button:
+    if predict_button:
 
-    input_vector = [
+        input_vector = [
 
-        st.session_state.reactor_pressure,
-        st.session_state.feed_temp,
-        st.session_state.feed_rate,
-        st.session_state.reactor_temp,
-        st.session_state.hydrogen_flow,
-        st.session_state.catalyst_loading
+            st.session_state.reactor_pressure,
+            st.session_state.feed_temp,
+            st.session_state.feed_rate,
+            st.session_state.reactor_temp,
+            st.session_state.hydrogen_flow,
+            st.session_state.catalyst_loading
 
-    ]
+        ]
 
-    pred, std, preds = ensemble_predict(
-        input_vector
-    )
+        pred, std, preds = ensemble_predict(
+            input_vector
+        )
 
-    st.session_state.mfi_pred = float(pred[0])
-    st.session_state.yield_pred = float(pred[1])
+        st.session_state.mfi_pred = float(pred[0])
+        st.session_state.yield_pred = float(pred[1])
 
-    confidence = np.exp(
-        -np.mean(std)
-    ) * 100
+        confidence = np.exp(
+            -np.mean(std)
+        ) * 100
 
-    st.success(
-        f"Prediction Completed | Confidence = {confidence:.1f}%"
-    )
+        st.success(
+            f"Prediction Completed | Confidence = {confidence:.1f}%"
+        )
 
-    st.rerun()
-    mfi = st.session_state.mfi_pred
-    yield_value = st.session_state.yield_pred
+        mfi = st.session_state.mfi_pred
+        yield_value = st.session_state.yield_pred
 
         
 
