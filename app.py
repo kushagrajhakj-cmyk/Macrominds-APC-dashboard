@@ -531,7 +531,7 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:240px;
+        left:220px;
         top:20px;
         color:white;
         text-align:center;
@@ -581,21 +581,21 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:240px;
-        top:350px;
+        left:250px;
+        top:330px;
         color:white;
         text-align:center;
         ">
         <b>CATALYST</b><br>
-        Load = {catalyst_loading:.2f}
+        Load = {catalyst_loading:.2f} Kg/h<br>
         </div>
 
         <!-- PRODUCT LINE -->
 
         <div style="
         position:absolute;
-        left:350px;
-        top:200px;
+        left:420px;
+        top:190px;
         width:220px;
         border-top:4px solid #4FC3F7;
         ">
@@ -605,8 +605,8 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:650px;
-        top:145px;
+        left:500px;
+        top:200px;
         color:white;
         ">
         <b>PRODUCT</b><br>
