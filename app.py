@@ -361,7 +361,7 @@ with tab1:
     position:absolute;
     left:100px;
     top:200px;
-    color:white;
+    color:blue;
     ">
     <b>FEED</b><br>
     T = {feed_temp:.1f} °C<br>
@@ -386,7 +386,7 @@ with tab1:
     position:absolute;
     left:210px;
     top:20px;
-    color:white;
+    color:blue;
     text-align:center;
     ">
     <b>HYDROGEN</b><br>
@@ -404,7 +404,7 @@ with tab1:
     border:4px solid #4FC3F7;
     border-radius:40px;
     text-align:center;
-    color:white;
+    color:blue;
     padding-top:20px;
     font-size:14px;
     ">
@@ -436,7 +436,7 @@ with tab1:
     position:absolute;
     left:250px;
     top:330px;
-    color:white;
+    color:blue;
     text-align:center;
     ">
     <b>CATALYST</b><br>
@@ -460,7 +460,7 @@ with tab1:
     position:absolute;
     left:500px;
     top:200px;
-    color:white;
+    color:blue;
     ">
     <b>PRODUCT</b><br>
     MFI = {mfi:.2f}<br>
