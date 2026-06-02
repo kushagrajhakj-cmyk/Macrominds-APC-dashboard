@@ -519,8 +519,8 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:320px;
-        top:60px;
+        left:360px;
+        top:40px;
         width:4px;
         height:60px;
         background:#4FC3F7;
@@ -531,8 +531,8 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:300px;
-        top:0px;
+        left:270px;
+        top:20px;
         color:white;
         text-align:center;
         ">
