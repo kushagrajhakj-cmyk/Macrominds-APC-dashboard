@@ -378,7 +378,7 @@ with tab1:
     ">
     <b>FEED</b><br>
     T = {st.session_state.feed_temp:.1f} °C<br>
-    Flow rate = {feed_rate:.1f} m3/h<br>
+    Flow rate = {st.session_state.feed_rate:.1f} m3/h<br>
     </div>
 
     <!-- HYDROGEN LINE -->
@@ -403,7 +403,7 @@ with tab1:
     text-align:center;
     ">
     <b>HYDROGEN</b><br>
-    Flow rate = {hydrogen_flow:.1f} m3/h<br>
+    Flow rate = {st.session_state.hydrogen_flow:.1f} m3/h<br>
     </div>
 
     <!-- REACTOR -->
@@ -426,8 +426,8 @@ with tab1:
 
     <br><br>
 
-    T = {reactor_temp:.1f} °C<br>
-    P = {reactor_pressure:.1f} bar
+    T = {st.session_state.reactor_temp:.1f} °C<br>
+    P = {st.session_state.reactor_pressure:.1f} bar
 
     </div>
 
@@ -453,7 +453,7 @@ with tab1:
     text-align:center;
     ">
     <b>CATALYST</b><br>
-    Load = {catalyst_loading:.2f} Kg/h<br>
+    Load = {st.session_state.catalyst_loading:.2f} Kg/h<br>
     </div>
 
     <!-- PRODUCT LINE -->
@@ -476,8 +476,8 @@ with tab1:
     color:blue;
     ">
     <b>PRODUCT</b><br>
-    MFI = {mfi:.2f}<br>
-    Yield = {yield_value:.2f}
+    MFI = {st.session_state.mfi:.2f}<br>
+    Yield = {st.session_state.yield_value:.2f}
     </div>
 
     </div>
