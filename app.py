@@ -322,16 +322,29 @@ with tab1:
 
     st.subheader("Live Process Flow Diagram")
 
-    feed_temp = float(current["Feed_Temperature"])
-    feed_rate = float(current["Feed_Rate"])
+    if "feed_temp" not in st.session_state:
+        st.session_state.feed_temp = float(current["Feed_Temperature"])
 
-    reactor_temp = float(current["Reactor_Temperature"])
-    reactor_pressure = float(current["Reactor_Pressure"])
+    if "feed_rate" not in st.session_state:
+        st.session_state.feed_rate = float(current["Feed_Rate"])
 
-    hydrogen_flow = float(current["Hydrogen_Flow"])
-    catalyst_loading = float(current["Catalyst_Loading"])
-    mfi = float(current["MFI"])
-    yield_value = float(current["Yield"])
+    if "reactor_temp" not in st.session_state:
+        st.session_state.reactor_temp = float(current["Reactor_Temperature"])
+
+    if "reactor_pressure" not in st.session_state:
+        st.session_state.reactor_pressure = float(current["Reactor_Pressure"])
+
+    if "hydrogen_flow" not in st.session_state:
+        st.session_state.hydrogen_flow = float(current["Hydrogen_Flow"])
+
+    if "catalyst_loading" not in st.session_state:
+        st.session_state.catalyst_loading = float(current["Catalyst_Loading"])
+
+    if "mfi_pred" not in st.session_state:
+        st.session_state.mfi_pred = float(current["MFI"])
+
+    if "yield_pred" not in st.session_state:
+        st.session_state.yield_pred = float(current["Yield"])
 
 
     st.markdown(
