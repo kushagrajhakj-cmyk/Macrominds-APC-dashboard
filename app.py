@@ -285,67 +285,11 @@ st.markdown(
 # SIDEBAR
 # =====================================================
 
-st.sidebar.header(
-    "Current Plant Conditions"
-)
-
-pressure = st.sidebar.number_input(
-
-    "Reactor Pressure",
-
-    value=22.0
-
-)
-
-feed_temp = st.sidebar.number_input(
-
-    "Feed Temperature",
-
-    value=75.0
-
-)
-
-feed_rate = st.sidebar.number_input(
-
-    "Feed Rate",
-
-    value=120.0
-
-)
 
 st.sidebar.markdown("---")
 
 st.sidebar.header(
-    "Target Product Properties"
-)
-
-target_mfi = st.sidebar.number_input(
-
-    "Target MFI",
-
-    value=35.0
-
-)
-
-target_yield = st.sidebar.number_input(
-
-    "Target Yield",
-
-    value=90.0
-
-)
-
-
-
-run_button = st.sidebar.button(
-    "Optimize Process"
-)
-
-
-st.sidebar.markdown("---")
-
-st.sidebar.header(
-    "Developed by Kushagra"
+    "Developed by Petchem lab"
 )
 
 # =====================================================
@@ -355,7 +299,7 @@ tab1,tab2,tab3,tab4 = st.tabs(
 
     [
 
-        "PFD Overview",
+        "Live PFD",
 
         "Historical Data",
 
@@ -372,119 +316,26 @@ tab1,tab2,tab3,tab4 = st.tabs(
 
 with tab1:
 
-    st.subheader("Live Process Flow Diagram")
+
 
     current = df.iloc[-1]
 
-    st.markdown("### Process Inputs")
+    st.subheader("Live Process Flow Diagram")
 
-    c1,c2,c3 = st.columns(3)
+    feed_temp = float(current["Feed_Temperature"])
+    feed_rate = float(current["Feed_Rate"])
 
-    with c1:
+    reactor_temp = float(current["Reactor_Temperature"])
+    reactor_pressure = float(current["Reactor_Pressure"])
 
-        feed_temp = st.number_input(
-            "Feed Temperature (°C)",
-            value=float(current["Feed_Temperature"])
-        )
-
-        feed_rate = st.number_input(
-            "Feed Rate",
-            value=float(current["Feed_Rate"])
-        )
-
-    with c2:
-
-        reactor_temp = st.number_input(
-            "Reactor Temperature (°C)",
-            value=float(current["Reactor_Temperature"])
-        )
-
-        reactor_pressure = st.number_input(
-            "Reactor Pressure (bar)",
-            value=float(current["Reactor_Pressure"])
-        )
-
-    with c3:
-
-        hydrogen_flow = st.number_input(
-            "Hydrogen Flow",
-            value=float(current["Hydrogen_Flow"])
-        )
-
-        catalyst_loading = st.number_input(
-            "Catalyst Loading",
-            value=float(current["Catalyst_Loading"])
-        )
+    hydrogen_flow = float(current["Hydrogen_Flow"])
+    catalyst_loading = float(current["Catalyst_Loading"])
 
 
-
-    predict_button = st.button(
-    "Predict Product Quality"
-)
-    
-if "mfi_pred" not in st.session_state:
-
-    st.session_state.mfi_pred = current["MFI"]
-    st.session_state.yield_pred = current["Yield"]
-
-if predict_button:
-
-    input_vector = [
-
-        reactor_pressure,
-        feed_temp,
-        feed_rate,
-        reactor_temp,
-        hydrogen_flow,
-        catalyst_loading
-
-    ]
-
-    pred,std,preds = ensemble_predict(
-        input_vector
-    )
-
-    confidence = np.exp(
-        -np.mean(std)
-    ) * 100
-
-    st.session_state.mfi_pred = pred[0]
-    st.session_state.yield_pred = pred[1]
-
-    st.success(
-        f"Prediction Completed | Confidence = {confidence:.1f}%"
-    )
-
-    mfi = st.session_state.mfi_pred
-    yield_value = st.session_state.yield_pred
-
-        
-
-    anomaly_input = np.array([[
-    reactor_pressure,
-    feed_temp,
-    feed_rate,
-    reactor_temp,
-    hydrogen_flow,
-    catalyst_loading
-    ]])
-
-    prediction = iso_model.predict(
-        anomaly_input
-    )[0]
-
-    if prediction == -1:
-
-            st.error("🔴 Process Anomaly Detected")
-
-    else:
-
-            st.success("🟢 Normal Operation")
-
-st.markdown(
-     f"""
-     <div style="
-     width:100%;
+    st.markdown(
+    f"""
+    <div style="
+    width:100%;
     height:450px;
     position:relative;
     border:1px solid #444;
@@ -618,6 +469,95 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
+    st.markdown("### Process Inputs")
+
+    c1,c2,c3 = st.columns(3)
+
+    with c1:
+
+        feed_temp = st.number_input(
+            "Feed Temperature (°C)",
+            value=float(current["Feed_Temperature"])
+        )
+
+        feed_rate = st.number_input(
+            "Feed Rate",
+            value=float(current["Feed_Rate"])
+        )
+
+    with c2:
+
+        reactor_temp = st.number_input(
+            "Reactor Temperature (°C)",
+            value=float(current["Reactor_Temperature"])
+        )
+
+        reactor_pressure = st.number_input(
+            "Reactor Pressure (bar)",
+            value=float(current["Reactor_Pressure"])
+        )
+
+    with c3:
+
+        hydrogen_flow = st.number_input(
+            "Hydrogen Flow",
+            value=float(current["Hydrogen_Flow"])
+        )
+
+        catalyst_loading = st.number_input(
+            "Catalyst Loading",
+            value=float(current["Catalyst_Loading"])
+        )
+
+
+
+    predict_button = st.button(
+    "Predict Product Quality"
+)
+    
+if "mfi_pred" not in st.session_state:
+
+    st.session_state.mfi_pred = current["MFI"]
+    st.session_state.yield_pred = current["Yield"]
+
+if predict_button:
+
+    input_vector = [
+
+        reactor_pressure,
+        feed_temp,
+        feed_rate,
+        reactor_temp,
+        hydrogen_flow,
+        catalyst_loading
+
+    ]
+
+    pred,std,preds = ensemble_predict(
+        input_vector
+    )
+
+    confidence = np.exp(
+        -np.mean(std)
+    ) * 100
+
+    st.session_state.mfi_pred = pred[0]
+    st.session_state.yield_pred = pred[1]
+
+    st.success(
+        f"Prediction Completed | Confidence = {confidence:.1f}%"
+    )
+
+    mfi = st.session_state.mfi_pred
+    yield_value = st.session_state.yield_pred
+
+        
+
+
+
+
 with tab2:
 
     st.subheader("Historical Plant Data")
@@ -929,10 +869,85 @@ with tab2:
 # OPTIMIZER
 # =====================================================
 
+
 with tab3:
 
     st.subheader(
         "APC Optimizer"
+    )
+
+    col1,col2 = st.columns(2)
+
+    with col1:
+
+        st.markdown(
+            "### Current Plant Conditions"
+        )
+
+        pressure = st.number_input(
+
+            "Reactor Pressure",
+
+            value=22.0,
+
+            key="opt_pressure"
+
+        )
+
+        feed_temp = st.number_input(
+
+            "Feed Temperature",
+
+            value=75.0,
+
+            key="opt_feed_temp"
+
+        )
+
+        feed_rate = st.number_input(
+
+            "Feed Rate",
+
+            value=120.0,
+
+            key="opt_feed_rate"
+
+        )
+
+    with col2:
+
+        st.markdown(
+            "### Target Product Properties"
+        )
+
+        target_mfi = st.number_input(
+
+            "Target MFI",
+
+            value=35.0,
+
+            key="opt_target_mfi"
+
+        )
+
+        target_yield = st.number_input(
+
+            "Target Yield",
+
+            value=90.0,
+
+            key="opt_target_yield"
+
+        )
+
+    st.markdown("---")
+
+    run_button = st.button(
+
+        "Optimize Process",
+
+        key="optimize_button"
+
     )
 
     if run_button:
@@ -980,6 +995,8 @@ with tab3:
         pred,std,preds = ensemble_predict(
             optimal_input
         )
+
+        st.markdown("---")
 
         col1,col2 = st.columns(2)
 
@@ -1035,6 +1052,8 @@ with tab3:
 
             )
 
+        st.markdown("---")
+
         comparison = pd.DataFrame({
 
             "Variable":[
@@ -1059,21 +1078,28 @@ with tab3:
 
         })
 
+        st.subheader(
+            "Optimization Summary"
+        )
+
         st.dataframe(
+
             comparison,
+
             use_container_width=True
+
         )
 
         confidence = np.exp(
             -np.mean(std)
-        )*100
+        ) * 100
 
         st.subheader(
             "Model Confidence"
         )
 
         st.progress(
-            int(confidence)
+            int(min(confidence,100))
         )
 
         st.write(
