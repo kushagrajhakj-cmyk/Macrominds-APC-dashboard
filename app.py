@@ -481,143 +481,143 @@ if predict_button:
 
             st.success("🟢 Normal Operation")
 
-    st.markdown(
-        f"""
-        <div style="
-        width:100%;
-        height:450px;
-        position:relative;
-        border:1px solid #444;
-        border-radius:10px;
-        ">
+st.markdown(
+     f"""
+     <div style="
+     width:100%;
+    height:450px;
+    position:relative;
+    border:1px solid #444;
+    border-radius:10px;
+    ">
 
-        <!-- FEED LINE -->
+    <!-- FEED LINE -->
 
-        <div style="
-        position:absolute;
-        left:80px;
-        top:190px;
-        width:220px;
-        border-top:4px solid #4FC3F7;
-        ">
-        </div>
+    <div style="
+    position:absolute;
+    left:80px;
+    top:190px;
+    width:220px;
+    border-top:4px solid #4FC3F7;
+    ">
+    </div>
 
-        <!-- FEED VALUES -->
+    <!-- FEED VALUES -->
 
-        <div style="
-        position:absolute;
-        left:100px;
-        top:200px;
-        color:white;
-        ">
-        <b>FEED</b><br>
-        T = {feed_temp:.1f} °C<br>
-        Flow rate = {feed_rate:.1f} m3/h<br>
-        </div>
+    <div style="
+    position:absolute;
+    left:100px;
+    top:200px;
+    color:white;
+    ">
+    <b>FEED</b><br>
+    T = {feed_temp:.1f} °C<br>
+    Flow rate = {feed_rate:.1f} m3/h<br>
+    </div>
 
-        <!-- HYDROGEN LINE -->
+    <!-- HYDROGEN LINE -->
 
-        <div style="
-        position:absolute;
-        left:360px;
-        top:40px;
-        width:4px;
-        height:60px;
-        background:#4FC3F7;
-        ">
-        </div>
+    <div style="
+    position:absolute;
+    left:360px;
+    top:40px;
+    width:4px;
+    height:60px;
+    background:#4FC3F7;
+    ">
+    </div>
 
-        <!-- HYDROGEN VALUES -->
+    <!-- HYDROGEN VALUES -->
 
-        <div style="
-        position:absolute;
-        left:220px;
-        top:20px;
-        color:white;
-        text-align:center;
-        ">
-        <b>HYDROGEN</b><br>
-        Flow rate = {hydrogen_flow:.1f} m3/h<br>
-        </div>
+    <div style="
+    position:absolute;
+    left:210px;
+    top:20px;
+    color:white;
+    text-align:center;
+    ">
+    <b>HYDROGEN</b><br>
+    Flow rate = {hydrogen_flow:.1f} m3/h<br>
+    </div>
 
-        <!-- REACTOR -->
+    <!-- REACTOR -->
 
-        <div style="
-        position:absolute;
-        left:300px;
-        top:100px;
-        width:120px;
-        height:180px;
-        border:4px solid #4FC3F7;
-        border-radius:40px;
-        text-align:center;
-        color:white;
-        padding-top:20px;
-        font-size:14px;
-        ">
+    <div style="
+    position:absolute;
+    left:300px;
+    top:100px;
+    width:120px;
+    height:180px;
+    border:4px solid #4FC3F7;
+    border-radius:40px;
+    text-align:center;
+    color:white;
+    padding-top:20px;
+    font-size:14px;
+    ">
 
-        <b>REACTOR</b>
+    <b>REACTOR</b>
 
-        <br><br>
+    <br><br>
 
-        T = {reactor_temp:.1f} °C<br>
-        P = {reactor_pressure:.1f} bar
+    T = {reactor_temp:.1f} °C<br>
+    P = {reactor_pressure:.1f} bar
 
-        </div>
+    </div>
 
-        <!-- CATALYST LINE -->
+    <!-- CATALYST LINE -->
 
-        <div style="
-        position:absolute;
-        left:360px;
-        top:280px;
-        width:4px;
-        height:60px;
-        background:#4FC3F7;
-        ">
-        </div>
+    <div style="
+    position:absolute;
+    left:360px;
+    top:280px;
+    width:4px;
+    height:60px;
+    background:#4FC3F7;
+    ">
+    </div>
 
-        <!-- CATALYST VALUES -->
+    <!-- CATALYST VALUES -->
 
-        <div style="
-        position:absolute;
-        left:250px;
-        top:330px;
-        color:white;
-        text-align:center;
-        ">
-        <b>CATALYST</b><br>
-        Load = {catalyst_loading:.2f} Kg/h<br>
-        </div>
+    <div style="
+    position:absolute;
+    left:250px;
+    top:330px;
+    color:white;
+    text-align:center;
+    ">
+    <b>CATALYST</b><br>
+    Load = {catalyst_loading:.2f} Kg/h<br>
+    </div>
 
-        <!-- PRODUCT LINE -->
+    <!-- PRODUCT LINE -->
 
-        <div style="
-        position:absolute;
-        left:420px;
-        top:190px;
-        width:220px;
-        border-top:4px solid #4FC3F7;
-        ">
-        </div>
+    <div style="
+    position:absolute;
+    left:420px;
+    top:190px;
+    width:220px;
+    border-top:4px solid #4FC3F7;
+    ">
+    </div>
 
-        <!-- PRODUCT VALUES -->
+    <!-- PRODUCT VALUES -->
 
-        <div style="
-        position:absolute;
-        left:500px;
-        top:200px;
-        color:white;
-        ">
-        <b>PRODUCT</b><br>
-        MFI = {mfi:.2f}<br>
-        Yield = {yield_value:.2f}
-        </div>
+    <div style="
+    position:absolute;
+    left:500px;
+    top:200px;
+    color:white;
+    ">
+    <b>PRODUCT</b><br>
+    MFI = {mfi:.2f}<br>
+    Yield = {yield_value:.2f}
+    </div>
 
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 with tab2:
 
     st.subheader("Historical Plant Data")
