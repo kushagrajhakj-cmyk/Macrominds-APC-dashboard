@@ -506,13 +506,13 @@ if predict_button:
 
         <div style="
         position:absolute;
-        left:20px;
-        top:145px;
+        left:100px;
+        top:165px;
         color:white;
         ">
         <b>FEED</b><br>
         Temp = {feed_temp:.1f} °C<br>
-        Rate = {feed_rate:.1f}
+        Flow rate = {feed_rate:.1f} m3/h<br>
         </div>
 
         <!-- HYDROGEN LINE -->
