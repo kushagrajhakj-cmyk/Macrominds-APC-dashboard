@@ -274,7 +274,7 @@ def optimize_process(
 # =====================================================
 
 st.title(
-    "MacroMinds Advanced Process Control Dashboard"
+    "PetChem Advanced Process Control Dashboard"
 )
 
 st.markdown(
@@ -289,7 +289,7 @@ st.markdown(
 st.sidebar.markdown("---")
 
 st.sidebar.header(
-    "Developed by Petchem lab"
+    "Developed by Team MacroMinds, Petchem lab"
 )
 
 # =====================================================
@@ -330,6 +330,8 @@ with tab1:
 
     hydrogen_flow = float(current["Hydrogen_Flow"])
     catalyst_loading = float(current["Catalyst_Loading"])
+    mfi = float(current["MFI"])
+    yield_value = float(current["Yield"])
 
 
     st.markdown(
