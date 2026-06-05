@@ -298,60 +298,7 @@ st.sidebar.header(
 
 st.sidebar.markdown("---")
 
-st.sidebar.subheader("🤖 Macrominds AI")
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
-
-for msg in st.session_state.chat_history[-5:]:
-
-    if msg["role"] == "user":
-
-        st.sidebar.markdown(
-            f"🧑 **You:** {msg['content']}"
-        )
-
-    else:
-
-        st.sidebar.markdown(
-            f"🤖 **Bot:** {msg['content']}"
-        )
-
-user_prompt = st.sidebar.text_input(
-    "Ask AI",
-    key="sidebar_chat"
-)
-
-ask_button = st.sidebar.button(
-    "Send",
-    use_container_width=True
-)
-
-if ask_button and user_prompt:
-
-    st.session_state.chat_history.append(
-        {
-            "role":"user",
-            "content":user_prompt
-        }
-    )
-
-    with st.spinner("Thinking..."):
-
-        response = agent.run(user_prompt)
-
-    st.session_state.chat_history.append(
-        {
-            "role":"assistant",
-            "content":response
-        }
-
-    )
-
-    st.rerun()
-
-    
 # =====================================================
 # TABS
 # =====================================================
