@@ -936,7 +936,7 @@ with tab3:
 
         target_productivity = st.number_input(
 
-            "Target Productivity",
+            "Target productivity",
 
             value=90.0,
 
@@ -1050,7 +1050,7 @@ with tab3:
 
             st.metric(
 
-                "Predicted Productivity",
+                "Predicted productivity",
 
                 f"{pred[1]:.2f}"
 
@@ -1198,7 +1198,7 @@ with tab4:
 
         y="productivity",
 
-        title="Productivity Prediction Comparison"
+        title="productivity Prediction Comparison"
 
     )
 
