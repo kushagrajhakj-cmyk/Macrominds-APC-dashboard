@@ -203,7 +203,7 @@ def optimize_process(
     feed_temp,
     feed_rate,
     target_mfi,
-    target_productivity
+    target_yield
 
 ):
 
@@ -235,7 +235,7 @@ def optimize_process(
 
             +
 
-            (pred[1]-target_productivity)**2
+            (pred[1]-target_yield)**2
 
             +
 
@@ -332,7 +332,7 @@ with tab1:
         "hydrogen_flow": float(current["Hydrogen_Flow"]),
         "catalyst_loading": float(current["Catalyst_Loading"]),
         "mfi_pred": float(current["MFI"]),
-        "productivity_pred": float(current["productivity"])
+        "yield_pred": float(current["yield"])
     }
 
     for k, v in defaults.items():
@@ -470,7 +470,7 @@ with tab1:
     ">
     <b>PRODUCT</b><br>
     MFI = {st.session_state.mfi_pred:.2f}<br>
-    productivity = {st.session_state.productivity_pred:.2f}
+    yield = {st.session_state.yield_pred:.2f}
     </div>
 
     </div>
@@ -544,7 +544,7 @@ with tab1:
         )
 
         st.session_state.mfi_pred = float(pred[0])
-        st.session_state.productivity_pred = float(pred[1])
+        st.session_state.yield_pred = float(pred[1])
 
         confidence = np.exp(
             -np.mean(std)
@@ -555,7 +555,7 @@ with tab1:
         )
 
         mfi = st.session_state.mfi_pred
-        productivity_value = st.session_state.productivity_pred
+        yield_value = st.session_state.yield_pred
 
         
 
@@ -934,13 +934,13 @@ with tab3:
 
         )
 
-        target_productivity = st.number_input(
+        target_yield = st.number_input(
 
-            "Target productivity",
+            "Target yield",
 
             value=90.0,
 
-            key="opt_target_productivity"
+            key="opt_target_yield"
 
         )
 
@@ -970,7 +970,7 @@ with tab3:
 
                 target_mfi,
 
-                target_productivity
+                target_yield
 
             )
 
@@ -1050,7 +1050,7 @@ with tab3:
 
             st.metric(
 
-                "Predicted productivity",
+                "Predicted yield",
 
                 f"{pred[1]:.2f}"
 
@@ -1158,7 +1158,7 @@ with tab4:
 
         ],
 
-        "productivity":[
+        "yield":[
 
             preds[0][1],
             preds[1][1],
@@ -1181,7 +1181,7 @@ with tab4:
 
         y="MFI",
 
-        title="MFI Prediction Comparison"
+        title="MFI prediction comparison"
 
     )
 
@@ -1196,9 +1196,9 @@ with tab4:
 
         x="Model",
 
-        y="productivity",
+        y="yield",
 
-        title="productivity Prediction Comparison"
+        title="yield prediction comparison"
 
     )
 
