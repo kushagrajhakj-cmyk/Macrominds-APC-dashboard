@@ -196,22 +196,54 @@ def ensemble_predict(input_vector):
 # =====================================================
 # OPTIMIZER
 # =====================================================
-
 def optimize_process(
 
     pressure,
     feed_temp,
     feed_rate,
     target_mfi,
-    target_yield
+    target_yield,
+    variables
 
 ):
 
+    tunable_vars = []
+
+    bounds = []
+
+    for name, info in variables.items():
+
+        if info["tunable"]:
+
+            tunable_vars.append(name)
+
+            bounds.append(
+                (
+                    info["lower"],
+                    info["upper"]
+                )
+            )
+
     def objective(x):
 
-        reactor_temp = x[0]
-        hydrogen = x[1]
-        catalyst = x[2]
+        values = {}
+
+        idx = 0
+
+        for name, info in variables.items():
+
+            if info["tunable"]:
+
+                values[name] = x[idx]
+                idx += 1
+
+            else:
+
+                values[name] = info["value"]
+
+        reactor_temp = values["Reactor Temperature"]
+        hydrogen = values["Hydrogen Flow"]
+        catalyst = values["Catalyst Loading"]
 
         input_vector = [
 
@@ -225,33 +257,25 @@ def optimize_process(
 
         ]
 
-        pred,std,_ = ensemble_predict(
+        pred, std, _ = ensemble_predict(
             input_vector
         )
 
         loss = (
 
-            (pred[0]-target_mfi)**2
+            (pred[0] - target_mfi) ** 2
 
             +
 
-            (pred[1]-target_yield)**2
+            (pred[1] - target_yield) ** 2
 
             +
 
-            0.5*np.sum(std)
+            0.5 * np.sum(std)
 
         )
 
         return loss
-
-    bounds = [
-
-        (200,260),
-        (10,60),
-        (0.5,3.0)
-
-    ]
 
     result = differential_evolution(
 
@@ -267,7 +291,28 @@ def optimize_process(
 
     )
 
-    return result
+    optimal_values = {}
+
+    idx = 0
+
+    for name, info in variables.items():
+
+        if info["tunable"]:
+
+            optimal_values[name] = result.x[idx]
+            idx += 1
+
+        else:
+
+            optimal_values[name] = info["value"]
+
+    return {
+
+        "optimal_values": optimal_values,
+
+        "result": result
+
+    }
 
 # =====================================================
 # HEADER
@@ -332,7 +377,7 @@ with tab1:
         "hydrogen_flow": float(current["Hydrogen_Flow"]),
         "catalyst_loading": float(current["Catalyst_Loading"]),
         "mfi_pred": float(current["MFI"]),
-        "yield_pred": float(current["yield"])
+        "yield_pred": float(current["Yield"])
     }
 
     for k, v in defaults.items():
@@ -470,7 +515,7 @@ with tab1:
     ">
     <b>PRODUCT</b><br>
     MFI = {st.session_state.mfi_pred:.2f}<br>
-    yield = {st.session_state.yield_pred:.2f}
+    Yield = {st.session_state.yield_pred:.2f}
     </div>
 
     </div>
@@ -936,7 +981,7 @@ with tab3:
 
         target_yield = st.number_input(
 
-            "Target yield",
+            "Target Yield",
 
             value=90.0,
 
@@ -944,17 +989,74 @@ with tab3:
 
         )
 
-    st.markdown("---")
+st.subheader("Optimization Variables")
 
-    run_button = st.button(
+variables = {}
 
-        "Optimize Process",
+for var, default_val, lb, ub in [
 
-        key="optimize_button"
+    ("Reactor Temperature", 230.0, 200.0, 260.0),
+    ("Hydrogen Flow", 25.0, 10.0, 60.0),
+    ("Catalyst Loading", 1.5, 0.5, 3.0)
 
-    )
+]:
 
-    if run_button:
+    st.markdown(f"### {var}")
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+
+        tunable = st.checkbox(
+            "Tunable",
+            value=True,
+            key=f"{var}_tunable"
+        )
+
+    with c2:
+
+        value = st.number_input(
+            "Fixed Value",
+            value=default_val,
+            key=f"{var}_value"
+        )
+
+    with c3:
+
+        lower = st.number_input(
+            "Lower Bound",
+            value=lb,
+            key=f"{var}_lb"
+        )
+
+    with c4:
+
+        upper = st.number_input(
+            "Upper Bound",
+            value=ub,
+            key=f"{var}_ub"
+        )
+
+    variables[var] = {
+
+        "tunable": tunable,
+        "value": value,
+        "lower": lower,
+        "upper": upper
+
+    }
+
+st.markdown("---")
+
+run_button = st.button(
+
+    "Optimize Process",
+
+    key="optimize_button"
+
+)
+
+if run_button:
 
         with st.spinner(
             "Running optimization..."
@@ -962,23 +1064,25 @@ with tab3:
 
             result = optimize_process(
 
-                pressure,
+                pressure=pressure,
 
-                feed_temp,
+                feed_temp=feed_temp,
 
-                feed_rate,
+                feed_rate=feed_rate,
 
-                target_mfi,
+                target_mfi=target_mfi,
 
-                target_yield
+                target_yield=target_yield,
+
+                variables=variables
 
             )
 
-        best_temp = result.x[0]
+        best_temp = result["optimal_values"]["Reactor Temperature"]
 
-        best_h2 = result.x[1]
+        best_h2 = result["optimal_values"]["Hydrogen Flow"]
 
-        best_cat = result.x[2]
+        best_cat = result["optimal_values"]["Catalyst Loading"]
 
         optimal_input = [
 
@@ -1050,7 +1154,7 @@ with tab3:
 
             st.metric(
 
-                "Predicted yield",
+                "Predicted Yield",
 
                 f"{pred[1]:.2f}"
 
@@ -1062,23 +1166,33 @@ with tab3:
 
             "Variable":[
 
-                "Reactor Temperature",
+                 "Reactor Temperature",
 
-                "Hydrogen Flow",
+                 "Hydrogen Flow",
 
-                "Catalyst Loading"
+                 "Catalyst Loading"
 
             ],
 
             "Recommended":[
 
-                best_temp,
+                 best_temp,
 
-                best_h2,
+                 best_h2,
 
-                best_cat
+                 best_cat
 
-            ]
+             ],
+
+            "Status":[
+
+                 "Optimized" if variables["Reactor Temperature"]["tunable"] else "Fixed",
+
+                 "Optimized" if variables["Hydrogen Flow"]["tunable"] else "Fixed",
+
+                 "Optimized" if variables["Catalyst Loading"]["tunable"] else "Fixed"
+
+             ]
 
         })
 
@@ -1144,9 +1258,9 @@ with tab4:
         "Model":[
 
 
-            "XGBoost",
+            "Model_1",
 
-            "ANN"
+            "Model_2"
 
         ],
 
@@ -1158,7 +1272,7 @@ with tab4:
 
         ],
 
-        "yield":[
+        "Yield":[
 
             preds[0][1],
             preds[1][1],
@@ -1181,7 +1295,7 @@ with tab4:
 
         y="MFI",
 
-        title="MFI prediction comparison"
+        title="MFI Prediction Comparison"
 
     )
 
@@ -1196,9 +1310,9 @@ with tab4:
 
         x="Model",
 
-        y="yield",
+        y="Yield",
 
-        title="yield prediction comparison"
+        title="Yield Prediction Comparison"
 
     )
 
