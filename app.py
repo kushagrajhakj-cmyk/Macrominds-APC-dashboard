@@ -5,7 +5,7 @@ import numpy as np
 import joblib
 import torch
 import torch.nn as nn
-import json
+
 from scipy.optimize import differential_evolution
 import plotly.express as px
 from sklearn.ensemble import IsolationForest
@@ -15,7 +15,7 @@ from sklearn.ensemble import IsolationForest
 # =====================================================
 
 st.set_page_config(
-    page_title=" Advanced Process Control",
+    page_title="🏭 Advanced Process Control",
     page_icon="🏭",
     layout="wide"
 )
@@ -292,13 +292,10 @@ st.sidebar.header(
     "Developed by Team MacroMinds, Petchem lab"
 )
 
-st.sidebar.markdown("---")
-
-
 # =====================================================
 # TABS
 # =====================================================
-tab1,tab2,tab3,tab4= st.tabs(
+tab1,tab2,tab3,tab4 = st.tabs(
 
     [
 
@@ -309,7 +306,6 @@ tab1,tab2,tab3,tab4= st.tabs(
         "Optimizer",
 
         "Model diagnostics"
-
 
     ]
 
