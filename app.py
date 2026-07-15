@@ -115,7 +115,7 @@ feature_names = [
 # Product-quality columns aren't guaranteed to exist under these exact
 # names in every data file, so detect them rather than hardcoding —
 # this is also what caused the earlier KeyError.
-target_names = [c for c in ["MFI", "yield"] if c in df.columns]
+target_names = [c for c in ["MFI", "Yield"] if c in df.columns]
 
 
 def compute_rolling_features(df, feature_names, window):
@@ -362,7 +362,7 @@ with tab1:
         "hydrogen_flow": float(current["Hydrogen_Flow"]),
         "catalyst_loading": float(current["Catalyst_Loading"]),
         "mfi_pred": float(current["MFI"]),
-        "yield_pred": float(current["yield"])
+        "yield_pred": float(current["Yield"])
     }
 
     for k, v in defaults.items():
