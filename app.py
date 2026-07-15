@@ -88,33 +88,12 @@ def load_data():
 df = load_data()
 
 # =====================================================
-# ANOMALY MODEL
+# TIME-SERIES ANOMALY DETECTION (rolling-window Isolation Forest)
 # =====================================================
-
-@st.cache_resource
-def train_anomaly_model(df):
-
-    features = [
-
-        "Reactor_Pressure",
-        "Feed_Temperature",
-        "Feed_Rate",
-        "Reactor_Temperature",
-        "Hydrogen_Flow",
-        "Catalyst_Loading"
-
-    ]
-
-    model = IsolationForest(
-        contamination=0.03,
-        random_state=42
-    )
-
-    model.fit(df[features])
-
-    return model
-
-iso_model = train_anomaly_model(df)
+# Instead of feeding raw single-row snapshots into Isolation Forest
+# (which only catches instantaneous outliers), we build rolling-window
+# statistics (mean + std over a sliding window) per variable. This lets
+# the model catch temporal pattern shifts / drifts, not just one-off spikes.
 
 feature_names = [
 
@@ -127,27 +106,49 @@ feature_names = [
 
 ]
 
-# =====================================================
-# LIVE DATA FOR DEMO
-# =====================================================
 
-live_data = df.sample(1)
+def compute_rolling_features(df, feature_names, window):
 
-score = iso_model.decision_function(
-    live_data[feature_names]
-)[0]
+    roll_mean = df[feature_names].rolling(window).mean()
+    roll_std = df[feature_names].rolling(window).std()
 
-prediction = iso_model.predict(
-    live_data[feature_names]
-)[0]
+    roll_mean.columns = [f"{c}_roll_mean" for c in feature_names]
+    roll_std.columns = [f"{c}_roll_std" for c in feature_names]
 
-health = max(
-    0,
-    min(
-        100,
-        (score + 0.5) * 100
+    feats = pd.concat([roll_mean, roll_std], axis=1)
+
+    return feats
+
+
+@st.cache_resource
+def train_ts_anomaly_model(df, window, contamination):
+
+    feats = compute_rolling_features(df, feature_names, window)
+    feats = feats.dropna()
+
+    model = IsolationForest(
+        contamination=contamination,
+        random_state=42
     )
-)
+
+    model.fit(feats)
+
+    return model, feats
+
+
+def run_ts_anomaly_detection(df, window=20, contamination=0.03):
+
+    model, feats = train_ts_anomaly_model(df, window, contamination)
+
+    scores = model.decision_function(feats)
+    preds = model.predict(feats)
+
+    results = df.loc[feats.index].copy()
+    results["anomaly_score"] = scores
+    results["is_anomaly"] = preds == -1
+    results["health"] = ((scores + 0.5) * 100).clip(0, 100)
+
+    return results
 
 # =====================================================
 # ENSEMBLE PREDICTION
@@ -196,54 +197,22 @@ def ensemble_predict(input_vector):
 # =====================================================
 # OPTIMIZER
 # =====================================================
+
 def optimize_process(
 
     pressure,
     feed_temp,
     feed_rate,
     target_mfi,
-    target_yield,
-    variables
+    target_productivity
 
 ):
 
-    tunable_vars = []
-
-    bounds = []
-
-    for name, info in variables.items():
-
-        if info["tunable"]:
-
-            tunable_vars.append(name)
-
-            bounds.append(
-                (
-                    info["lower"],
-                    info["upper"]
-                )
-            )
-
     def objective(x):
 
-        values = {}
-
-        idx = 0
-
-        for name, info in variables.items():
-
-            if info["tunable"]:
-
-                values[name] = x[idx]
-                idx += 1
-
-            else:
-
-                values[name] = info["value"]
-
-        reactor_temp = values["Reactor Temperature"]
-        hydrogen = values["Hydrogen Flow"]
-        catalyst = values["Catalyst Loading"]
+        reactor_temp = x[0]
+        hydrogen = x[1]
+        catalyst = x[2]
 
         input_vector = [
 
@@ -257,25 +226,33 @@ def optimize_process(
 
         ]
 
-        pred, std, _ = ensemble_predict(
+        pred,std,_ = ensemble_predict(
             input_vector
         )
 
         loss = (
 
-            (pred[0] - target_mfi) ** 2
+            (pred[0]-target_mfi)**2
 
             +
 
-            (pred[1] - target_yield) ** 2
+            (pred[1]-target_productivity)**2
 
             +
 
-            0.5 * np.sum(std)
+            0.5*np.sum(std)
 
         )
 
         return loss
+
+    bounds = [
+
+        (200,260),
+        (10,60),
+        (0.5,3.0)
+
+    ]
 
     result = differential_evolution(
 
@@ -291,28 +268,7 @@ def optimize_process(
 
     )
 
-    optimal_values = {}
-
-    idx = 0
-
-    for name, info in variables.items():
-
-        if info["tunable"]:
-
-            optimal_values[name] = result.x[idx]
-            idx += 1
-
-        else:
-
-            optimal_values[name] = info["value"]
-
-    return {
-
-        "optimal_values": optimal_values,
-
-        "result": result
-
-    }
+    return result
 
 # =====================================================
 # HEADER
@@ -343,7 +299,7 @@ st.sidebar.markdown("---")
 # =====================================================
 # TABS
 # =====================================================
-tab1,tab2,tab3,tab4= st.tabs(
+tab1,tab2,tab3,tab4,tab5 = st.tabs(
 
     [
 
@@ -353,7 +309,9 @@ tab1,tab2,tab3,tab4= st.tabs(
 
         "Optimizer",
 
-        "Model diagnostics"
+        "Model diagnostics",
+
+        "Anomaly Detection"
 
 
     ]
@@ -377,7 +335,7 @@ with tab1:
         "hydrogen_flow": float(current["Hydrogen_Flow"]),
         "catalyst_loading": float(current["Catalyst_Loading"]),
         "mfi_pred": float(current["MFI"]),
-        "yield_pred": float(current["Yield"])
+        "productivity_pred": float(current["productivity"])
     }
 
     for k, v in defaults.items():
@@ -515,7 +473,7 @@ with tab1:
     ">
     <b>PRODUCT</b><br>
     MFI = {st.session_state.mfi_pred:.2f}<br>
-    Yield = {st.session_state.yield_pred:.2f}
+    productivity = {st.session_state.productivity_pred:.2f}
     </div>
 
     </div>
@@ -589,7 +547,7 @@ with tab1:
         )
 
         st.session_state.mfi_pred = float(pred[0])
-        st.session_state.yield_pred = float(pred[1])
+        st.session_state.productivity_pred = float(pred[1])
 
         confidence = np.exp(
             -np.mean(std)
@@ -600,7 +558,7 @@ with tab1:
         )
 
         mfi = st.session_state.mfi_pred
-        yield_value = st.session_state.yield_pred
+        productivity_value = st.session_state.productivity_pred
 
         
 
@@ -979,84 +937,27 @@ with tab3:
 
         )
 
-        target_yield = st.number_input(
+        target_productivity = st.number_input(
 
-            "Target Yield",
+            "Target productivity",
 
             value=90.0,
 
-            key="opt_target_yield"
+            key="opt_target_productivity"
 
         )
 
-st.subheader("Optimization Variables")
+    st.markdown("---")
 
-variables = {}
+    run_button = st.button(
 
-for var, default_val, lb, ub in [
+        "Optimize Process",
 
-    ("Reactor Temperature", 230.0, 200.0, 260.0),
-    ("Hydrogen Flow", 25.0, 10.0, 60.0),
-    ("Catalyst Loading", 1.5, 0.5, 3.0)
+        key="optimize_button"
 
-]:
+    )
 
-    st.markdown(f"### {var}")
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    with c1:
-
-        tunable = st.checkbox(
-            "Tunable",
-            value=True,
-            key=f"{var}_tunable"
-        )
-
-    with c2:
-
-        value = st.number_input(
-            "Fixed Value",
-            value=default_val,
-            key=f"{var}_value"
-        )
-
-    with c3:
-
-        lower = st.number_input(
-            "Lower Bound",
-            value=lb,
-            key=f"{var}_lb"
-        )
-
-    with c4:
-
-        upper = st.number_input(
-            "Upper Bound",
-            value=ub,
-            key=f"{var}_ub"
-        )
-
-    variables[var] = {
-
-        "tunable": tunable,
-        "value": value,
-        "lower": lower,
-        "upper": upper
-
-    }
-
-st.markdown("---")
-
-run_button = st.button(
-
-    "Optimize Process",
-
-    key="optimize_button"
-
-)
-
-if run_button:
+    if run_button:
 
         with st.spinner(
             "Running optimization..."
@@ -1064,25 +965,23 @@ if run_button:
 
             result = optimize_process(
 
-                pressure=pressure,
+                pressure,
 
-                feed_temp=feed_temp,
+                feed_temp,
 
-                feed_rate=feed_rate,
+                feed_rate,
 
-                target_mfi=target_mfi,
+                target_mfi,
 
-                target_yield=target_yield,
-
-                variables=variables
+                target_productivity
 
             )
 
-        best_temp = result["optimal_values"]["Reactor Temperature"]
+        best_temp = result.x[0]
 
-        best_h2 = result["optimal_values"]["Hydrogen Flow"]
+        best_h2 = result.x[1]
 
-        best_cat = result["optimal_values"]["Catalyst Loading"]
+        best_cat = result.x[2]
 
         optimal_input = [
 
@@ -1154,7 +1053,7 @@ if run_button:
 
             st.metric(
 
-                "Predicted Yield",
+                "Predicted productivity",
 
                 f"{pred[1]:.2f}"
 
@@ -1166,33 +1065,23 @@ if run_button:
 
             "Variable":[
 
-                 "Reactor Temperature",
+                "Reactor Temperature",
 
-                 "Hydrogen Flow",
+                "Hydrogen Flow",
 
-                 "Catalyst Loading"
+                "Catalyst Loading"
 
             ],
 
             "Recommended":[
 
-                 best_temp,
+                best_temp,
 
-                 best_h2,
+                best_h2,
 
-                 best_cat
+                best_cat
 
-             ],
-
-            "Status":[
-
-                 "Optimized" if variables["Reactor Temperature"]["tunable"] else "Fixed",
-
-                 "Optimized" if variables["Hydrogen Flow"]["tunable"] else "Fixed",
-
-                 "Optimized" if variables["Catalyst Loading"]["tunable"] else "Fixed"
-
-             ]
+            ]
 
         })
 
@@ -1258,9 +1147,9 @@ with tab4:
         "Model":[
 
 
-            "Model_1",
+            "XGBoost",
 
-            "Model_2"
+            "ANN"
 
         ],
 
@@ -1272,7 +1161,7 @@ with tab4:
 
         ],
 
-        "Yield":[
+        "productivity":[
 
             preds[0][1],
             preds[1][1],
@@ -1310,9 +1199,9 @@ with tab4:
 
         x="Model",
 
-        y="Yield",
+        y="productivity",
 
-        title="Yield Prediction Comparison"
+        title="productivity Prediction Comparison"
 
     )
 
@@ -1320,6 +1209,258 @@ with tab4:
         fig2,
         use_container_width=True
     )
+
+# =====================================================
+# ANOMALY DETECTION (time-series aware)
+# =====================================================
+
+with tab5:
+
+    st.subheader(
+        "Time-Series Anomaly Detection"
+    )
+
+    st.caption(
+        "Rolling-window Isolation Forest — each point is scored using the "
+        "mean and standard deviation of every variable over a sliding "
+        "window, so drifts and pattern shifts are caught, not just "
+        "single-row spikes."
+    )
+
+    col1,col2 = st.columns(2)
+
+    with col1:
+
+        window = st.slider(
+
+            "Rolling window size (samples)",
+
+            min_value=5,
+
+            max_value=100,
+
+            value=20,
+
+            step=5,
+
+            key="anomaly_window"
+
+        )
+
+    with col2:
+
+        contamination = st.slider(
+
+            "Expected anomaly rate",
+
+            min_value=0.01,
+
+            max_value=0.10,
+
+            value=0.03,
+
+            step=0.01,
+
+            key="anomaly_contamination"
+
+        )
+
+    results = run_ts_anomaly_detection(
+
+        df,
+
+        window=window,
+
+        contamination=contamination
+
+    )
+
+    total_points = len(results)
+
+    total_anomalies = int(results["is_anomaly"].sum())
+
+    anomaly_rate = 100 * total_anomalies / total_points if total_points else 0
+
+    latest = results.iloc[-1]
+
+    st.markdown("---")
+
+    m1,m2,m3,m4 = st.columns(4)
+
+    with m1:
+
+        st.metric(
+
+            "Points analyzed",
+
+            f"{total_points}"
+
+        )
+
+    with m2:
+
+        st.metric(
+
+            "Anomalies detected",
+
+            f"{total_anomalies}"
+
+        )
+
+    with m3:
+
+        st.metric(
+
+            "Anomaly rate",
+
+            f"{anomaly_rate:.1f}%"
+
+        )
+
+    with m4:
+
+        latest_status = "🔴 Anomaly" if latest["is_anomaly"] else "🟢 Normal"
+
+        st.metric(
+
+            "Latest reading",
+
+            latest_status,
+
+            delta=f"Health {latest['health']:.1f}"
+
+        )
+
+    st.markdown("---")
+
+    st.markdown("### Health Score Over Time")
+
+    fig_health = px.line(
+
+        results,
+
+        x=results.index,
+
+        y="health",
+
+        title="Process Health Score (rolling Isolation Forest)"
+
+    )
+
+    fig_health.update_layout(
+
+        xaxis_title="Sample Number",
+
+        yaxis_title="Health Score"
+
+    )
+
+    anomaly_points = results[results["is_anomaly"]]
+
+    fig_health.add_scatter(
+
+        x=anomaly_points.index,
+
+        y=anomaly_points["health"],
+
+        mode="markers",
+
+        marker=dict(color="red", size=8, symbol="x"),
+
+        name="Anomaly"
+
+    )
+
+    st.plotly_chart(
+
+        fig_health,
+
+        use_container_width=True
+
+    )
+
+    st.markdown("### Variable Trend with Anomaly Overlay")
+
+    selected_var = st.selectbox(
+
+        "Select Variable",
+
+        feature_names + ["MFI", "productivity"],
+
+        key="anomaly_var"
+
+    )
+
+    fig_var = px.line(
+
+        results,
+
+        x=results.index,
+
+        y=selected_var,
+
+        title=f"{selected_var} with Detected Anomalies"
+
+    )
+
+    fig_var.add_scatter(
+
+        x=anomaly_points.index,
+
+        y=anomaly_points[selected_var],
+
+        mode="markers",
+
+        marker=dict(color="red", size=8, symbol="x"),
+
+        name="Anomaly"
+
+    )
+
+    fig_var.update_layout(
+
+        xaxis_title="Sample Number",
+
+        yaxis_title=selected_var
+
+    )
+
+    st.plotly_chart(
+
+        fig_var,
+
+        use_container_width=True
+
+    )
+
+    st.markdown("### Detected Anomaly Events")
+
+    if total_anomalies == 0:
+
+        st.info(
+
+            "No anomalies detected at the current window size / "
+            "contamination setting."
+
+        )
+
+    else:
+
+        display_cols = feature_names + ["MFI","productivity","anomaly_score","health"]
+
+        anomaly_table = anomaly_points[display_cols].sort_values(
+
+            "anomaly_score"
+
+        )
+
+        st.dataframe(
+
+            anomaly_table,
+
+            use_container_width=True
+
+        )
 
 st.markdown("---")
 
