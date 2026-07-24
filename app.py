@@ -302,7 +302,7 @@ def optimize_process(
 # =====================================================
 
 st.title(
-    "PetChem Advanced Process Control Dashboard"
+    "PetChem Process Control Solution Dashboard"
 )
 
 st.markdown(
